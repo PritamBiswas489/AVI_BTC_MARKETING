@@ -3,7 +3,7 @@ const FilterContext = createContext(null);
 
 export function FilterProvider({ children }) {
   const [search, setSearch] = useState("");
-  const [source, setSource] = useState("google");
+  const [source, setSource] = useState("all");
   const now = new Date();
   const [dateRange, setDateRange] = useState({
     start: new Date(now.getFullYear(), now.getMonth(), 1),
