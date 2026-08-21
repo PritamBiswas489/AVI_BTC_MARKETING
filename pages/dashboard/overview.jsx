@@ -45,6 +45,7 @@ async function fetchJson(url, options = {}) {
     queryParams.append("fromDate", toLocalISODate(options.dateRange.start));
     queryParams.append("toDate", toLocalISODate(options.dateRange.end));
   }
+  if(options.limit) queryParams.append("limit", options.limit);
   const fullUrl = `${url}?${queryParams.toString()}`;
   console.log("Constructed full URL:", fullUrl);
    
@@ -87,7 +88,7 @@ export default function OverviewPage() {
           fetchJson("/api/executive-overview/statistics", { source, dateRange }),
           fetchJson("/api/executive-overview/ad-spend-vs-revenue", { source, dateRange }),
           fetchJson("/api/executive-overview/leads-by-platform", { source, dateRange }),
-          fetchJson("/api/executive-overview/top-booking-campaigns?limit=5", { source, dateRange }),
+          fetchJson("/api/executive-overview/top-booking-campaigns", { source, dateRange, limit:10 }),
         ]);
 
         if (cancelled) return;
