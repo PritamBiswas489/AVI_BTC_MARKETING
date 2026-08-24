@@ -1,13 +1,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import {
+  AUTH_STORAGE_KEY,
+  clearAuthCookie,
+  hasAuthCookie,
+  isValidCredential,
+  setAuthCookie,
+} from "../lib/auth";
 
 const AuthContext = createContext({
   loggedIn: false,
   ready: false,
-  login: () => {},
+  login: () => false,
   logout: () => {},
 });
-
-const STORAGE_KEY = "voyage_logged_in";
 
 export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -15,19 +20,34 @@ export function AuthProvider({ children }) {
 
   // Restore session on first load so a page refresh on a dashboard route doesn't kick the user out.
   useEffect(() => {
-    const stored = typeof window !== "undefined" && window.localStorage.getItem(STORAGE_KEY);
-    setLoggedIn(stored === "true");
+    const stored = typeof window !== "undefined" && window.localStorage.getItem(AUTH_STORAGE_KEY);
+    const authenticated = stored === "true" || hasAuthCookie();
+    setLoggedIn(authenticated);
+    if (authenticated && typeof window !== "undefined") {
+      window.localStorage.setItem(AUTH_STORAGE_KEY, "true");
+      setAuthCookie();
+    }
     setReady(true);
   }, []);
 
-  const login = () => {
+  const login = (username, password) => {
+    if (!isValidCredential(username, password)) {
+      return false;
+    }
     setLoggedIn(true);
-    window.localStorage.setItem(STORAGE_KEY, "true");
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(AUTH_STORAGE_KEY, "true");
+      setAuthCookie();
+    }
+    return true;
   };
 
   const logout = () => {
     setLoggedIn(false);
-    window.localStorage.removeItem(STORAGE_KEY);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      clearAuthCookie();
+    }
   };
 
   return (
