@@ -15,11 +15,14 @@ export function Card({ title, action, children, style }) {
   );
 }
 
-export function KPI({ label, value, delta, up, accent }) {
+export function KPI({ label, value, delta, up, accent, valueils }) {
   return (
     <div style={{ background: "#fff", border: "1px solid #E7EAF3", borderRadius: 16, padding: "18px 20px", display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
       <span style={{ fontFamily: "Inter", fontSize: 12.5, fontWeight: 600, color: "#6B7280", letterSpacing: 0.2 }}>{label}</span>
       <span style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 23, fontWeight: 800, color: accent || "#0F1424" }}>{value}</span>
+      {valueils && (
+        <span style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 16, fontWeight: 600, color: accent || "#0F1424" }}>{valueils}</span>
+      )}
       {delta && (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: "Inter", fontSize: 12.5, fontWeight: 600, color: up ? "#17B893" : "#E15A5A", width: "fit-content" }}>
           {up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />} {delta}
@@ -101,7 +104,7 @@ export function StatusPill({ status }) {
   return <span style={{ background: s.bg, color: s.fg, fontSize: 11.5, fontWeight: 700, padding: "4px 10px", borderRadius: 999 }}>{status}</span>;
 }
 
-export function CustomTooltip({ active, payload, label, prefix = "฿" }) {
+export function CustomTooltip({ active, payload, label, prefix = "" }) {
   if (!active || !payload || !payload.length) return null;
   return (
     <div style={{ background: "#0B1330", borderRadius: 10, padding: "10px 13px", fontFamily: "Inter", fontSize: 12, color: "#fff", boxShadow: "0 8px 24px rgba(11,19,48,0.25)" }}>

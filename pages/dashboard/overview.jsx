@@ -14,6 +14,12 @@ const fmtCurrency = (value) => {
   return `฿${Math.round(value).toLocaleString("en-US")}`;
 };
 
+const fmtCurrencyIls = (value) => {
+  if (value === null || value === undefined) return "—";
+  if (Math.abs(value) >= 1_000_000) return `₪${(value / 1_000_000).toFixed(2)}M`;
+  return `₪${Math.round(value).toLocaleString("en-US")}`;
+};
+
 const fmtNumber = (value) => (value === null || value === undefined ? "—" : Math.round(value).toLocaleString("en-US"));
 
 const fmtPercent = (value, decimals = 0) => (value === null || value === undefined ? "—" : `${value.toFixed(decimals)}%`);
@@ -132,6 +138,7 @@ export default function OverviewPage() {
     {
       label: "Total Ad Spend",
       value: fmtCurrency(stats.cards.totalAdSpend.value),
+      valueils: fmtCurrencyIls(stats.cards.totalAdSpend.valueIls),
       delta: `${fmtPercent(Math.abs(stats.cards.totalAdSpend.changePercent ?? 0), 1)} vs ${cmpMonth}`,
       up: (stats.cards.totalAdSpend.changePercent ?? 0) >= 0,
     },
@@ -168,11 +175,13 @@ export default function OverviewPage() {
       accent: "#2F6FED",
     },
   ];
+  console.log("KPI Items:", kpiItems);
 
   const spendRevenue = trend.series.map((point) => ({
     d: fmtShortDate(point.date),
-    spend: point.adSpend,
-    revenue: point.revenue,
+    spend: (point.adSpend),
+    spendIls: (point.adSpendIls),
+    revenue: (point.revenue),
   }));
 
   const platformDonut = platforms.platforms.map((p) => ({
@@ -185,6 +194,7 @@ export default function OverviewPage() {
     name: c.campaignName,
     platform: c.platform,
     spend: fmtCurrency(c.spend),
+    spendIls: fmtCurrencyIls(c.spendIls),
     bookings: fmtNumber(c.bookings),
     roas: fmtRoas(c.roas),
   }));
@@ -202,13 +212,15 @@ export default function OverviewPage() {
             <AreaChart data={spendRevenue} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
               <defs>
                 <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2F6FED" stopOpacity={0.28} /><stop offset="100%" stopColor="#2F6FED" stopOpacity={0} /></linearGradient>
+                  <linearGradient id="spendGradIls" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2F6FED" stopOpacity={0.28} /><stop offset="100%" stopColor="#2F6FED" stopOpacity={0} /></linearGradient>
                 <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#17B893" stopOpacity={0.3} /><stop offset="100%" stopColor="#17B893" stopOpacity={0} /></linearGradient>
               </defs>
               <CartesianGrid vertical={false} stroke="#EEF1F8" />
               <XAxis dataKey="d" tick={axisStyle} axisLine={false} tickLine={false} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 1000}K`} />
               <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="spend" name="Ad Spend" stroke="#2F6FED" strokeWidth={2.4} fill="url(#spendGrad)" />
+              <Area type="monotone" dataKey="spend" name="Ad Spend (THB)" stroke="#2F6FED" strokeWidth={2.4} fill="url(#spendGrad)" />
+              <Area type="monotone" dataKey="spendIls" name="Ad Spend (ILS)" stroke="#2F6FED" strokeWidth={2.4} fill="url(#spendGradIls)" />
               <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#17B893" strokeWidth={2.4} fill="url(#revGrad)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -217,10 +229,15 @@ export default function OverviewPage() {
       </div>
       <Card title="Top Booking Campaigns">
         <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "Inter" }}>
-          <thead><tr><Th>Campaign</Th><Th>Platform</Th><Th>Spend</Th><Th>Bookings</Th><Th>ROAS</Th></tr></thead>
+          <thead><tr><Th>Campaign</Th><Th>Platform</Th><Th>Spend</Th><Th>Spend (ILS)</Th><Th>Bookings</Th><Th>ROAS</Th></tr></thead>
           <tbody>{campaignRows.map((c) => (
             <tr key={c.name} style={{ borderTop: "1px solid #F0F2F8" }}>
-              <Td strong>{c.name}</Td><Td>{c.platform}</Td><Td>{c.spend}</Td><Td>{c.bookings}</Td><Td color="#17B893" strong>{c.roas}</Td>
+              <Td strong>{c.name}</Td>
+              <Td>{c.platform}</Td>
+              <Td>{c.spend}</Td>
+              <Td>{c.spendIls}</Td>
+              <Td>{c.bookings}</Td>
+              <Td color="#17B893" strong>{c.roas}</Td>
             </tr>
           ))}</tbody>
         </table>
