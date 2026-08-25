@@ -5,7 +5,7 @@ import { API_URL } from "../../enviroment";
 
 /* ---------------- constants ---------------- */
 
-const ENDPOINT = "/api/ad-level-cost-allocation";
+const ENDPOINT = "/api/campaign-reconciled-cost-allocation";
 
 const DEFAULT_QUERY = {
   page: 1,
@@ -22,11 +22,6 @@ const PREFERRED_COLUMNS = [
   "account_id",
   "campaign_id",
   "campaign_name",
-  "group_type",
-  "group_id",
-  "group_name",
-  "ad_id",
-  "ad_name",
   "currency",
   "spend",
   "spend_ils",
@@ -51,11 +46,6 @@ const COLUMN_LABELS = {
   account_id: "Account ID",
   campaign_id: "Campaign ID",
   campaign_name: "Campaign Name",
-  group_type: "Group Type",
-  group_id: "Group ID",
-  group_name: "Group Name",
-  ad_id: "Ad ID",
-  ad_name: "Ad Name",
   currency: "Currency",
   spend: "Spend",
   spend_ils: "Spend ILS",
@@ -151,7 +141,7 @@ function buildPageItems(currentPage, totalPages) {
 
 /* ---------------- data fetching ---------------- */
 
-async function fetchAdLevelCostAllocation(query) {
+async function fetchCampaignReconciledCostAllocation(query) {
   const params = new URLSearchParams();
   params.set("page", String(Math.max(parseInt(query.page, 10) || 1, 1)));
   params.set("limit", String(Math.max(parseInt(query.limit, 10) || 50, 1)));
@@ -173,7 +163,7 @@ async function fetchAdLevelCostAllocation(query) {
 
 /* ---------------- page ---------------- */
 
-export default function AdLevelCostAllocationPage() {
+export default function CampaignReconciledCostAllocationPage() {
   const [query, setQuery] = useState(DEFAULT_QUERY);
   const [draft, setDraft] = useState(DEFAULT_QUERY);
   const [rows, setRows] = useState([]);
@@ -187,7 +177,7 @@ export default function AdLevelCostAllocationPage() {
     async function load() {
       try {
         setLoading(true);
-        const body = await fetchAdLevelCostAllocation(query);
+        const body = await fetchCampaignReconciledCostAllocation(query);
         if (cancelled) return;
 
         setRows(Array.isArray(body.data) ? body.data : []);
@@ -240,13 +230,16 @@ export default function AdLevelCostAllocationPage() {
   const pageItems = pagination ? buildPageItems(pagination.page, pagination.totalPages) : [];
 
   return (
-    <DashboardLayout title="Ad Level Cost Allocation" subtitle="Filter and audit per-ad cost allocation across platforms and campaigns.">
+    <DashboardLayout
+      title="Campaign Reconciled Cost Allocation"
+      subtitle="Filter and audit reconciled campaign-level cost allocation across platforms."
+    >
       <Card title="Filters">
         <div style={{ display: "flex", gap: 12, alignItems: "end", flexWrap: "wrap", fontFamily: "Inter" }}>
           <Field label="Search">
             <input
               type="text"
-              placeholder="campaign, ad, account"
+              placeholder="campaign, account, platform"
               value={draft.search}
               onChange={(e) => setDraft((d) => ({ ...d, search: e.target.value }))}
               onKeyDown={handleEnterKey}
@@ -316,7 +309,7 @@ export default function AdLevelCostAllocationPage() {
           <div style={{ padding: 40, fontFamily: "Inter", color: "#6B7280", textAlign: "center" }}>No data found.</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "Inter", fontSize: 12, minWidth: 1600 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "Inter", fontSize: 12, minWidth: 1300 }}>
               <thead>
                 <tr>
                   {columns.map((key) => (

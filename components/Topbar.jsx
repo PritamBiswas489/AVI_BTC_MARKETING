@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect, createContext, useContext } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Bell, Check } from "lucide-react";
+import { useRouter } from "next/router";
 
 import { useFilters } from "../context/FilterContext";
 
@@ -35,6 +36,14 @@ const PRESETS = [
   { label: "This month", range: () => { const n = new Date(); return { start: new Date(n.getFullYear(), n.getMonth(), 1), end: new Date(n.getFullYear(), n.getMonth() + 1, 0) }; } },
   { label: "Last month", range: () => { const n = new Date(); return { start: new Date(n.getFullYear(), n.getMonth() - 1, 1), end: new Date(n.getFullYear(), n.getMonth(), 0) }; } },
 ];
+
+const HIDE_TOPBAR_FILTERS_PATHS = new Set([
+  "/dashboard/ad-level-cost-allocation",
+  "/dashboard/ad-spend-tracking",
+  "/dashboard/campaign-reconciled-cost-allocation",
+  "/dashboard/it-tracking-leads",
+  "/dashboard/lead-profit-summary",
+]);
 
 /* ============================================================
    DateRangePicker.jsx  (drop into its own file)
@@ -290,7 +299,10 @@ export function SourceDropdown() {
    so any component (a sidebar, a table filter row, etc.) can
    read/write it via useFilters() without prop drilling.
 ============================================================ */
-export function Topbar({ title, subtitle }) {
+export default function Topbar({ title, subtitle }) {
+  const router = useRouter();
+  const shouldShowFilters = !HIDE_TOPBAR_FILTERS_PATHS.has(router.pathname);
+
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 28px", borderBottom: "1px solid #E7EAF3", background: "#FFFFFF", flexShrink: 0 }}>
       <div>
@@ -298,42 +310,17 @@ export function Topbar({ title, subtitle }) {
         <p style={{ fontFamily: "Inter", fontSize: 12.5, color: "#8A93B0", margin: "3px 0 0" }}>{subtitle}</p>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <SourceDropdown />
-        <DateRangePicker />
+        {shouldShowFilters && (
+          <>
+            <SourceDropdown />
+            <DateRangePicker />
+          </>
+        )}
         <button style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid #E7EAF3", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <Bell size={15} color="#4A5170" />
         </button>
         <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#2F6FED,#17B893)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: "'Plus Jakarta Sans'", fontWeight: 700, fontSize: 13 }}>NA</div>
       </div>
     </div>
-  );
-}
-
-/* ============================================================
-   Demo — shows the Topbar wired to FilterProvider, plus a
-   search input living OUTSIDE the Topbar reading/writing the
-   same context, to prove the search value is now shared state.
-============================================================ */
-function DemoConsumer() {
-  const { search, setSearch, source, dateRange } = useFilters();
-  return (
-    <div style={{ padding: 24 }}>
-       
-      <div style={{ fontFamily: "Inter", fontSize: 12.5, color: "#8A93B0" }}>
-        source: <strong style={{ color: "#2F6FED" }}>{source}</strong>
-        {"  ·  "}range: <strong style={{ color: "#2F6FED" }}>{fmt(dateRange.start)} – {fmt(dateRange.end)}</strong>
-      </div>
-    </div>
-  );
-}
-
-export default function Demo() {
-  return (
-   
-      <div style={{ fontFamily: "Inter", background: "#F7F8FC" }}>
-        <Topbar title="Dashboard" subtitle="Overview of your campaigns" />
-        <DemoConsumer />
-      </div>
-     
   );
 }

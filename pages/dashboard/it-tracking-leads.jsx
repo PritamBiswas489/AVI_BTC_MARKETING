@@ -70,10 +70,10 @@ const FILTER_PARAM_MAP = {
    to reach into raw_payload.tracking.attribution.current_touch */
 const COLUMNS = [
   { key: "id", label: "ID", sticky: true, width: 80 },
-  { key: "raw_payload", label: "Raw Payload", type: "json", width: 90 },
-  { key: "ticketLeads", label: "Ticket Leads", type: "ticketLeads", width: 90 },
-  { key: "sellPrice", label: "Sell Price", type: "ticketMoney", field: "sellPrice", currencyField: "sellCurrency", width: 110 },
-  { key: "profitPrice", label: "Profit Price", type: "ticketMoney", field: "profitPrice", currencyField: "profitCurrency", width: 110 },
+  { key: "raw_payload", label: "Raw Payload", type: "json", width: 102 },
+  { key: "ticketLeads", label: "Ticket Leads", type: "ticketLeads", width: 190 },
+  { key: "sellPrice", label: "Sell Price", type: "ticketMoney", field: "sellPrice", currencyField: "sellCurrency", width: 145 },
+  { key: "profitPrice", label: "Profit Price", type: "ticketMoney", field: "profitPrice", currencyField: "profitCurrency", width: 145 },
   { key: "lead_id", label: "Lead ID", width: 290 },
   { key: "lead_status_auto", label: "Status", type: "status", width: 120 },
   { key: "channel", label: "Channel", type: "channel", width: 90 },
@@ -135,6 +135,13 @@ const COLUMNS = [
 const v = (val) => (val === null || val === undefined || val === "" ? "—" : String(val));
 
 const truncate = (str, n) => (!str ? "" : str.length > n ? `${str.slice(0, n)}…` : str);
+
+const fmtMoney = (val) => {
+  if (val === null || val === undefined || val === "") return "—";
+  const num = Number(val);
+  if (Number.isNaN(num)) return String(val);
+  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 
 const fmtDate = (d) => {
   if (!d) return "—";
@@ -322,7 +329,7 @@ export default function TrackingLeadsPage() {
           : null;
         const info = ticketStatusInfo(tickets?.[0]?.status);
         return (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, maxWidth: "100%" }}>
             {info && (
               <span
                 style={{
@@ -343,7 +350,12 @@ export default function TrackingLeadsPage() {
       case "ticketMoney": {
         const price = row.ticketLeads?.[0]?.[col.field];
         const currency = row.ticketLeads?.[0]?.[col.currencyField];
-        return <span>{price ?? "—"} {currency ?? ""}</span>;
+        return (
+          <span style={moneyCellStyle}>
+            <span style={moneyValueStyle}>{fmtMoney(price)}</span>
+            <span style={moneyCurrencyStyle}>{currency || ""}</span>
+          </span>
+        );
       }
 
       case "status": {
@@ -588,7 +600,9 @@ export default function TrackingLeadsPage() {
                 {rows.map((row, i) => (
                   <tr key={row.id ?? i} style={{ borderTop: "1px solid #F0F2F8" }}>
                     {COLUMNS.map((col) => (
-                      <Td key={col.key}>{renderCell(col, row)}</Td>
+                      <Td key={col.key}>
+                        <div style={gridCellContentStyle}>{renderCell(col, row)}</div>
+                      </Td>
                     ))}
                   </tr>
                 ))}
@@ -836,6 +850,32 @@ const jsonBtnStyle = {
   fontWeight: 600,
   cursor: "pointer",
   whiteSpace: "nowrap",
+};
+
+const gridCellContentStyle = {
+  maxWidth: "100%",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const moneyCellStyle = {
+  display: "inline-flex",
+  alignItems: "baseline",
+  gap: 6,
+  whiteSpace: "nowrap",
+};
+
+const moneyValueStyle = {
+  fontWeight: 700,
+  color: "#111827",
+  letterSpacing: 0.1,
+};
+
+const moneyCurrencyStyle = {
+  fontSize: 11,
+  fontWeight: 700,
+  color: "#6B7280",
 };
 
 const jsonMutedStyle = {
