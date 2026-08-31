@@ -17,9 +17,10 @@ const SOURCE_COLORS = { Meta: "#2F6FED", Google: "#17B893" };
    API call
 ------------------------------------------------------------------ */
 
-async function fetchLeadsDashboard({ startDate, endDate, recentLeadsLimit =20, signal }) {
+async function fetchLeadsDashboard({ startDate, endDate, recentLeadsLimit =20, source,  signal }) {
     const params = new URLSearchParams({ startDate, endDate });
     if (recentLeadsLimit) params.set("recentLeadsLimit", String(recentLeadsLimit));
+    if (source) params.set("source", source);
     const url = `${API_URL}/api/lead-statistics/dashboard?${params.toString()}`;
     console.log("Fetching leads dashboard from:", url);
     const res = await fetch(url, { signal });
@@ -103,7 +104,7 @@ export default function LeadsPage() {
             setLoading(true);
             setError(null);
             try {
-                const result = await fetchLeadsDashboard({ startDate: toLocalISODate(dateRange.start), endDate: toLocalISODate(dateRange.end), recentLeadsLimit: 20, signal });
+                const result = await fetchLeadsDashboard({ startDate: toLocalISODate(dateRange.start), endDate: toLocalISODate(dateRange.end), recentLeadsLimit: 20, source: source, signal });
                 setData(result);
             } catch (err) {
                 if (err.name !== "AbortError") {
@@ -113,7 +114,7 @@ export default function LeadsPage() {
                 setLoading(false);
             }
         },
-        [dateRange.start, dateRange.end],
+        [dateRange.start, dateRange.end, source],
     );
 
     useEffect(() => {
