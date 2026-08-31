@@ -194,79 +194,163 @@ export default function LeadsPage() {
             campaign: lead.campaign || "—",
             campaignId: lead.campaign_id || null,
             cost: formatCurrency(lead.cost, lead.costCurrency),
+            cost_ils_per_lead: formatCurrency(lead.cost_ils_per_lead, "ILS"),
             status: lead.status,
         }));
     }, [data]);
 
     return (
-        <DashboardLayout title="Leads" subtitle="Paid leads captured, matched and moving toward booking.">
-            {error && (
-                <div
+      <DashboardLayout
+        title="Leads"
+        subtitle="Paid leads captured, matched and moving toward booking."
+      >
+        {error && (
+          <div
+            style={{
+              marginBottom: 14,
+              padding: "10px 14px",
+              borderRadius: 8,
+              background: "#FDECEC",
+              color: "#E15A5A",
+              fontFamily: "Inter",
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            Couldn't load dashboard data: {error}
+          </div>
+        )}
+
+        <KPIGrid cols={5} items={loading ? [] : kpiItems} />
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.7fr 1fr",
+            gap: 14,
+            marginBottom: 14,
+          }}
+        >
+          <Card
+            title="Paid Leads Over Time"
+            action={
+              <div
+                style={{
+                  display: "flex",
+                  gap: 14,
+                  fontFamily: "Inter",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#6B7280",
+                }}
+              >
+                <span>
+                  <i
                     style={{
-                        marginBottom: 14,
-                        padding: "10px 14px",
-                        borderRadius: 8,
-                        background: "#FDECEC",
-                        color: "#E15A5A",
-                        fontFamily: "Inter",
-                        fontSize: 13,
-                        fontWeight: 600,
+                      display: "inline-block",
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: "#2F6FED",
+                      marginRight: 6,
                     }}
-                >
-                    Couldn't load dashboard data: {error}
-                </div>
-            )}
+                  />
+                  Meta
+                </span>
+                <span>
+                  <i
+                    style={{
+                      display: "inline-block",
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: "#17B893",
+                      marginRight: 6,
+                    }}
+                  />
+                  Google
+                </span>
+              </div>
+            }
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 10, right: 8, left: -18, bottom: 0 }}
+              >
+                <CartesianGrid vertical={false} stroke="#EEF1F8" />
+                <XAxis
+                  dataKey="d"
+                  tick={axisStyle}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip prefix="" />} />
+                <Bar
+                  dataKey="Meta"
+                  stackId="a"
+                  fill="#2F6FED"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="Google"
+                  stackId="a"
+                  fill="#17B893"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+          <Card title="Leads by Source">
+            <Donut
+              data={donutData}
+              centerValue={formatNumber(data?.leadsBySource?.total)}
+              centerLabel="Total Leads"
+            />
+          </Card>
+        </div>
 
-            <KPIGrid cols={5} items={loading ? [] : kpiItems} />
-
-            <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 14, marginBottom: 14 }}>
-                <Card
-                    title="Paid Leads Over Time"
-                    action={
-                        <div style={{ display: "flex", gap: 14, fontFamily: "Inter", fontSize: 12, fontWeight: 600, color: "#6B7280" }}>
-                            <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#2F6FED", marginRight: 6 }} />Meta</span>
-                            <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#17B893", marginRight: 6 }} />Google</span>
-                        </div>
-                    }
-                >
-                    <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={chartData} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
-                            <CartesianGrid vertical={false} stroke="#EEF1F8" />
-                            <XAxis dataKey="d" tick={axisStyle} axisLine={false} tickLine={false} />
-                            <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-                            <Tooltip content={<CustomTooltip prefix="" />} />
-                            <Bar dataKey="Meta" stackId="a" fill="#2F6FED" radius={[0, 0, 0, 0]} />
-                            <Bar dataKey="Google" stackId="a" fill="#17B893" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </Card>
-                <Card title="Leads by Source">
-                    <Donut data={donutData} centerValue={formatNumber(data?.leadsBySource?.total)} centerLabel="Total Leads" />
-                </Card>
-            </div>
-
-            <Card title="Recent Leads">
-                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "Inter" }}>
-                    <thead>
-                        <tr>
-                            <Th>Lead ID</Th><Th>Date</Th><Th>Source</Th><Th>Campaign</Th><Th>Campaign ID</Th><Th>Cost</Th><Th>Status</Th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {recentLeads.map((l) => (
-                            <tr key={l.id} style={{ borderTop: "1px solid #F0F2F8" }}>
-                                <Td strong color="#2F6FED">{l.id}</Td>
-                                <Td>{l.date}</Td>
-                                <Td>{l.source}</Td>
-                                <Td>{l.campaign}</Td>
-                                <Td>{l.campaignId}</Td>
-                                <Td>{l.cost}</Td>
-                                <td style={{ padding: "10px 6px" }}><StatusPill status={l.status} /></td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </Card>
-        </DashboardLayout>
+        <Card title="Recent Leads">
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontFamily: "Inter",
+            }}
+          >
+            <thead>
+              <tr>
+                <Th>Lead ID</Th>
+                <Th>Date</Th>
+                <Th>Source</Th>
+                <Th>Campaign</Th>
+                <Th>Campaign ID</Th>
+                <Th>Cost</Th>
+                <Th>Cost ils</Th>
+                <Th>Status</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentLeads.map((l) => (
+                <tr key={l.id} style={{ borderTop: "1px solid #F0F2F8" }}>
+                  <Td strong color="#2F6FED">
+                    {l.id}
+                  </Td>
+                  <Td>{l.date}</Td>
+                  <Td>{l.source}</Td>
+                  <Td>{l.campaign}</Td>
+                  <Td>{l.campaignId}</Td>
+                  <Td>{l.cost}</Td>
+                  <Td>{l.cost_ils_per_lead}</Td>
+                  <Td>
+                    <StatusPill status={l.status} />
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </DashboardLayout>
     );
 }
