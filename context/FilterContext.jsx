@@ -6,7 +6,7 @@ export function FilterProvider({ children }) {
   const [source, setSource] = useState("all");
   const now = new Date();
   const [dateRange, setDateRange] = useState({
-    start: new Date(now.getFullYear(), now.getMonth(), 1),
+    start: new Date(now.getFullYear(), now.getMonth() - 3, 1),
     end: new Date(now.getFullYear(), now.getMonth() + 1, 0),
   });
 //   useEffect(() => {
