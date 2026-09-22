@@ -42,7 +42,7 @@ const DEFAULT_QUERY = {
 /* draft key -> API filter param */
 const FILTER_PARAM_MAP = {
   leadId: "lead_id",
-  customerPhone: "customer_phone_normalized",
+  customerPhone: "customer_phone",
   customerEmail: "customer_email",
   utmSource: "utm_source",
   fromDate: "fromDate",
@@ -428,7 +428,7 @@ export default function TrackingLeadsPage() {
           <Field label="Customer Phone">
             <input
               type="text"
-              placeholder="normalized phone"
+              placeholder="phone number"
               value={draft.customerPhone}
               onChange={(e) => setDraft((d) => ({ ...d, customerPhone: e.target.value }))}
               onKeyDown={handleEnterKey}
