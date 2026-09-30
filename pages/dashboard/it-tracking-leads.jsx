@@ -320,7 +320,7 @@ export default function TrackingLeadsPage() {
         const tickets = row.ticketLeads || null;
         const loopData = tickets
           ? tickets.map((t) => ({
-              ticket_id: t.ticket_id,
+              phoneNumber: t?.phoneNumber,
               status: t.status,
               created_at: t.created_at,
               updated_at: t.updated_at,
