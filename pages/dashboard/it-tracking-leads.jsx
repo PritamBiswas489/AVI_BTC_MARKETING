@@ -6,6 +6,7 @@ import { API_URL } from "../../enviroment";
 /* ---------------- constants ---------------- */
 
 const ENDPOINT = "/api/it-tracking/leads";
+const EXPORT_ENDPOINT = "/api/it-tracking/leads/export-xlsx";
 
 const DEFAULT_FILTERS = {
   leadId: "",
@@ -72,6 +73,7 @@ const COLUMNS = [
   { key: "id", label: "ID", sticky: true, width: 80 },
   { key: "raw_payload", label: "Raw Payload", type: "json", width: 102 },
   { key: "ticketLeads", label: "Ticket Leads", type: "ticketLeads", width: 190 },
+  { key: "reservationDate", label: "Reservation Date", type: "reservationDate", field: "reservationDate", width: 165 },
   { key: "sellPrice", label: "Sell Price", type: "ticketMoney", field: "sellPrice", currencyField: "sellCurrency", width: 145 },
   { key: "profitPrice", label: "Profit Price", type: "ticketMoney", field: "profitPrice", currencyField: "profitCurrency", width: 145 },
   { key: "lead_id", label: "Lead ID", width: 290 },
@@ -151,6 +153,14 @@ const fmtDate = (d) => {
     day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
 };
+const fmtDate2 = (d) => {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "—";
+  return dt.toLocaleString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
+};
 
 const safeString = (obj) => {
   try {
@@ -223,6 +233,60 @@ async function fetchLeads(query) {
   return body;
 }
 
+/* Streams the SSE export endpoint (GET with filters in the query string).
+   Calls onProgress(percent, meta) and resolves with { downloadUrl, total }. */
+async function exportLeadsXlsx(query, onProgress) {
+  const params = new URLSearchParams();
+  // page / limit are ignored by the export endpoint – only send filters
+  Object.entries(FILTER_PARAM_MAP).forEach(([queryKey, paramKey]) => {
+    const val = query[queryKey];
+    if (val && String(val).trim()) params.set(paramKey, String(val).trim());
+  });
+
+  const res = await fetch(`${API_URL}${EXPORT_ENDPOINT}?${params.toString()}`, {
+    method: "GET",
+    credentials: "same-origin",
+    headers: { Accept: "text/event-stream" },
+  });
+  if (!res.ok || !res.body) throw new Error(`Export failed (${res.status})`);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result = null;
+
+  const handleBlock = (block) => {
+    let event = "message";
+    let data = "";
+    block.split("\n").forEach((line) => {
+      if (line.startsWith("event:")) event = line.slice(6).trim();
+      else if (line.startsWith("data:")) data += line.slice(5).trim();
+    });
+    if (!data) return;
+    const payload = JSON.parse(data);
+    if (event === "progress") onProgress?.(payload.percent, payload);
+    else if (event === "complete") result = payload;
+    else if (event === "error") throw new Error(payload.message || "Export failed");
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop(); // keep the incomplete tail
+    blocks.forEach(handleBlock);
+  }
+  if (buffer.trim()) handleBlock(buffer);
+
+  if (!result?.downloadUrl) throw new Error("Export finished without a download link");
+  // EXPORT_BASE_URL may be empty on the server -> relative URL, resolve against the API
+  const downloadUrl = /^https?:\/\//i.test(result.downloadUrl)
+    ? result.downloadUrl
+    : `${API_URL}${result.downloadUrl}`;
+  return { downloadUrl, total: result.total };
+}
+
 /* ---------------- page ---------------- */
 
 export default function TrackingLeadsPage() {
@@ -234,6 +298,8 @@ export default function TrackingLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modal, setModal] = useState(null); // { title, content }
+  const [exporting, setExporting] = useState(false);
+  const [exportPercent, setExportPercent] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -275,6 +341,27 @@ export default function TrackingLeadsPage() {
   const handleClear = () => {
     setDraft(DEFAULT_FILTERS);
     setQuery(DEFAULT_QUERY);
+  };
+
+  const handleExport = async () => {
+    if (exporting) return;
+    try {
+      setExporting(true);
+      setExportPercent(0);
+      // exports the filters currently applied (the last Search), not unsaved draft edits
+      const { downloadUrl } = await exportLeadsXlsx(query, (percent) => setExportPercent(percent));
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      alert(err.message || "Export failed");
+    } finally {
+      setExporting(false);
+      setExportPercent(0);
+    }
   };
 
   const handleEnterKey = (e) => {
@@ -347,6 +434,9 @@ export default function TrackingLeadsPage() {
         );
       }
 
+      case "reservationDate":
+        return <span style={{ color: "#4B5563" }}>{fmtDate2(row.ticketLeads?.[0]?.created_at)}</span>;
+
       case "ticketMoney": {
         const price = row.ticketLeads?.[0]?.[col.field];
         const currency = row.ticketLeads?.[0]?.[col.currencyField];
@@ -356,6 +446,11 @@ export default function TrackingLeadsPage() {
             <span style={moneyCurrencyStyle}>{currency || ""}</span>
           </span>
         );
+      }
+
+      case "ticketDate": {
+        const dateValue = row.ticketLeads?.[0]?.[col.field];
+        return <span style={{ color: "#4B5563" }}>{fmtDate(dateValue)}</span>;
       }
 
       case "status": {
@@ -494,6 +589,13 @@ export default function TrackingLeadsPage() {
           </button>
 
           <button onClick={commitDraft} style={btnPrimaryStyle}>Search</button>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            style={{ ...btnStyle, opacity: exporting ? 0.7 : 1, cursor: exporting ? "wait" : "pointer" }}
+          >
+            {exporting ? `Exporting… ${exportPercent}%` : "Export"}
+          </button>
           <button onClick={handleClear} style={btnStyle}>Clear</button>
 
           {pagination && (
