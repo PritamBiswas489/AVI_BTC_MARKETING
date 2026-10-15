@@ -555,7 +555,7 @@ export default function TrackingLeadsPage() {
 
           <Field label="From Date">
             <input
-              type="datetime-local"
+              type="date"
               value={draft.fromDate}
               onChange={(e) => setDraft((d) => ({ ...d, fromDate: e.target.value }))}
               onKeyDown={handleEnterKey}
@@ -565,7 +565,7 @@ export default function TrackingLeadsPage() {
 
           <Field label="To Date">
             <input
-              type="datetime-local"
+              type="date"
               value={draft.toDate}
               onChange={(e) => setDraft((d) => ({ ...d, toDate: e.target.value }))}
               onKeyDown={handleEnterKey}
@@ -653,10 +653,10 @@ export default function TrackingLeadsPage() {
                 </select>
               </Field>
               <Field label="Intake From Date">
-                <input type="datetime-local" value={draft.intakeFromDate} onChange={(e) => setDraft((d) => ({ ...d, intakeFromDate: e.target.value }))} onKeyDown={handleEnterKey} style={inputStyle} />
+                <input type="date" value={draft.intakeFromDate} onChange={(e) => setDraft((d) => ({ ...d, intakeFromDate: e.target.value }))} onKeyDown={handleEnterKey} style={inputStyle} />
               </Field>
               <Field label="Intake To Date">
-                <input type="datetime-local" value={draft.intakeToDate} onChange={(e) => setDraft((d) => ({ ...d, intakeToDate: e.target.value }))} onKeyDown={handleEnterKey} style={inputStyle} />
+                <input type="date" value={draft.intakeToDate} onChange={(e) => setDraft((d) => ({ ...d, intakeToDate: e.target.value }))} onKeyDown={handleEnterKey} style={inputStyle} />
               </Field>
 
               <GroupLabel>Ticket Mappings</GroupLabel>
